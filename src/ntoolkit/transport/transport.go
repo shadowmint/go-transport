@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"ntoolkit/errors"
+	"ntoolkit/jsonbridge"
 	"ntoolkit/threadpool"
 	"time"
 )
@@ -91,14 +92,24 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				api := &Api{&conn}
+				api := &Api{Connection: &conn}
 				err := transport.pool.Run(func() {
+
+					// Setup
+					bridge := jsonbridge.New(conn, conn)
+					bridge.Timeout = transport.Config.ReadTimeout
+					api.bridge = bridge
 
 					// Read content on the connection until it closes and push to the handler
 					// when a completed token is ready.
-
-					// ...
-					transport.handler(api)
+					for transport.active {
+						bridge.Read()
+						for bridge.Len() > 0 {
+							fmt.Printf("Got a token to handle!\n")
+							bridge.Next()
+							transport.handler(api)
+						}
+					}
 				})
 				if errors.Is(err, threadpool.ErrBusy{}) {
 					transport.logWarning("Failed to handle incoming connect; no available handlers")

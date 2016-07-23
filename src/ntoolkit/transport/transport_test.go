@@ -25,8 +25,8 @@ func TestRun(T *testing.T) {
 	}
 
 	if conn != nil {
-		fmt.Printf("connected from test")
-		conn.Write([]byte("{\"hello\": \"world\"}"))
+		fmt.Printf("connected from test\n")
+		conn.Write([]byte("{\"hello\": \"world\"}\n"))
 
 		time.Sleep(time.Second / 10)
 		conn.Close()

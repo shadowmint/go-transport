@@ -24,8 +24,9 @@
   },
   "dependencies": {
     "go-assert": "github:shadowmint/go-assert#1.0.0",
-    "go-linereader": "github:shadowmint/go-linereader",
-    "go-threadpool": "github:shadowmint/go-threadpool",
+    "go-jsonbridge": "github:shadowmint/go-jsonbridge#1.0.0",
+    "go-linereader": "github:shadowmint/go-linereader#1.0.0",
+    "go-threadpool": "github:shadowmint/go-threadpool#1.0.0",
     "mkdirp": "^0.5.1",
     "ncp": "^2.0.0"
   }

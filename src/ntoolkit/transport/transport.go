@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"ntoolkit/errors"
+	"ntoolkit/jsonbridge"
 	"ntoolkit/threadpool"
 	"time"
 )
@@ -28,7 +29,7 @@ type Config struct {
 // Transport is a local raw TCP listener for JSON objects.
 type Transport struct {
 	Config  *Config
-	handler func(*Api)
+	handler func(*API)
 	port    int
 	active  bool
 	pool    *threadpool.ThreadPool
@@ -36,7 +37,7 @@ type Transport struct {
 
 // New creates a new transport instance with a handler.
 // If no config object is passed, defaults are used.
-func New(handler func(*Api), config *Config) *Transport {
+func New(handler func(*API), config *Config) *Transport {
 	if config == nil {
 		config = &Config{
 			MaxThreads:    1,
@@ -91,14 +92,22 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				api := &Api{&conn}
+				api := &API{&conn}
 				err := transport.pool.Run(func() {
 
-					// Read content on the connection until it closes and push to the handler
-					// when a completed token is ready.
+					// Read content on the connection until it closes and push to the
+					// handler when a completed token is ready.
+					bridge = jsonbridge.New(conn, conn)
+					bridge.Timeout = transport.Config.ReadTimeout
+					api.bridge = bridge
 
-					// ...
-					transport.handler(api)
+					// Until the connection closes, dispatch events
+					for transport.active {
+						bridge.Read()
+						for bridge.Len() > 0 {
+							transport.handler(api)
+						}
+					}
 				})
 				if errors.Is(err, threadpool.ErrBusy{}) {
 					transport.logWarning("Failed to handle incoming connect; no available handlers")

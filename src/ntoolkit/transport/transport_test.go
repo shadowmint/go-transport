@@ -12,6 +12,7 @@ func TestRun(T *testing.T) {
 
 	// Open outgoing connection
 	trans := transport.New(func(api *transport.Api) {
+		fmt.Printf("Actually invoked the handler!!!!! %v\n", api)
 	}, nil)
 	go func() {
 		trans.Listen("127.0.0.1:0")

@@ -18,6 +18,9 @@ type Config struct {
 	// AcceptTimeout is the maximum blocking length of Accept() calls.
 	AcceptTimeout int
 
+	// ReadTimeout is the maximum blocking length of read requests.
+	ReadTimeout int
+
 	// The logger to use with this transport
 	Logger *log.Logger
 }
@@ -38,6 +41,7 @@ func New(handler func(*Api), config *Config) *Transport {
 		config = &Config{
 			MaxThreads:    1,
 			AcceptTimeout: 100,
+			ReadTimeout:   100,
 			Logger:        nil}
 	}
 	return &Transport{
@@ -66,10 +70,12 @@ func (transport *Transport) Listen(addr string) error {
 	// Prepare to handle requests
 	transport.port = l.Addr().(*net.TCPAddr).Port
 	transport.active = true
+	transport.pool = threadpool.New()
+	transport.pool.MaxThreads = transport.Config.MaxThreads
 
 	// Handle requests
 	go func() {
-		for true {
+		for {
 			// Try to handle the next connection
 			l.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(transport.Config.AcceptTimeout)))
 			conn, err := l.Accept()
@@ -85,25 +91,20 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				// Handle the connection?
-				fmt.Printf("Got a connection\n")
-				fmt.Printf("%v\n", conn)
-				fmt.Printf("%v\n", err)
+				api := &Api{&conn}
+				err := transport.pool.Run(func() {
 
-				pool := threadpool.New()
-				pool.MaxThreads = 2
+					// Read content on the connection until it closes and push to the handler
+					// when a completed token is ready.
 
-				value := 0
-
-				T.Assert(pool.Run(func() { value += 1 }) == nil)
-				T.Assert(pool.Run(func() { value += 1 }) == nil)
-				err := pool.Run(func() { value += 1 })
-
-				T.Assert(err != nil)
-				T.Assert(errors.Is(err, threadpool.ErrBusy{}))
-
-				pool.Wait()
-				T.Assert(value == 2)
+					// ...
+					transport.handler(api)
+				})
+				if errors.Is(err, threadpool.ErrBusy{}) {
+					transport.logWarning("Failed to handle incoming connect; no available handlers")
+				} else {
+					transport.logError("Error handling connection", err)
+				}
 			}
 		}
 
@@ -124,11 +125,19 @@ func (transport *Transport) Port() int {
 func (transport *Transport) Halt() {
 }
 
-// Log some message
+// Log some error message
 func (transport *Transport) logError(message string, err error) {
 	if transport.Config.Logger != nil {
 		fmt.Printf("%v %v", message, err)
 		transport.Config.Logger.Print(err)
+		transport.Config.Logger.Print(message)
+	}
+}
+
+// Log some warning message
+func (transport *Transport) logWarning(message string) {
+	if transport.Config.Logger != nil {
+		fmt.Printf("%v", message)
 		transport.Config.Logger.Print(message)
 	}
 }

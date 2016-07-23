@@ -11,7 +11,7 @@ import (
 func TestRun(T *testing.T) {
 
 	// Open outgoing connection
-	trans := transport.New(func(api *transport.Api) {
+	trans := transport.New(func(api *transport.API) {
 		fmt.Printf("Actually invoked the handler!!!!! %v\n", api)
 	}, nil)
 	go func() {
@@ -26,7 +26,7 @@ func TestRun(T *testing.T) {
 
 	if conn != nil {
 		fmt.Printf("connected from test\n")
-		conn.Write([]byte("{\"hello\": \"world\"}\n"))
+		conn.Write([]byte("{\"hello\": \"world\"}\t pun"))
 
 		time.Sleep(time.Second / 10)
 		conn.Close()

@@ -29,7 +29,7 @@ type Config struct {
 // Transport is a local raw TCP listener for JSON objects.
 type Transport struct {
 	Config  *Config
-	handler func(*Api)
+	handler func(*API)
 	port    int
 	active  bool
 	pool    *threadpool.ThreadPool
@@ -37,7 +37,7 @@ type Transport struct {
 
 // New creates a new transport instance with a handler.
 // If no config object is passed, defaults are used.
-func New(handler func(*Api), config *Config) *Transport {
+func New(handler func(*API), config *Config) *Transport {
 	if config == nil {
 		config = &Config{
 			MaxThreads:    1,
@@ -92,7 +92,7 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				api := &Api{Connection: &conn}
+				api := &API{Connection: &conn}
 				err := transport.pool.Run(func() {
 
 					// Setup

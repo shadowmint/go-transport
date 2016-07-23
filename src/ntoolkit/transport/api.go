@@ -3,17 +3,18 @@ package transport
 import "net"
 import "ntoolkit/jsonbridge"
 
-type Api struct {
-	bridge     *jsonbridge.Bridge
+// API is the api available to transport event handlers
+type API struct {
 	Connection *net.Conn
+	bridge     *jsonbridge.Bridge
 }
 
 // Read attempts to read the data segment into the given data object.
-func (api *Api) Read(data interface{}) error {
+func (api *API) Read(data interface{}) error {
 	return api.bridge.As(data)
 }
 
 // Write attempts to write the data given to the socket connection.
-func (api *Api) Write(data interface{}) error {
+func (api *API) Write(data interface{}) error {
 	return api.bridge.Write(data)
 }

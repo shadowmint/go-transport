@@ -11,15 +11,14 @@ import (
 func TestRun(T *testing.T) {
 
 	// Open outgoing connection
+	trans := transport.New(func(api *transport.Api) {
+	}, nil)
 	go func() {
-		trans := transport.New(func(api *transport.Api) {
-
-		})
-		trans.Listen(5000, 1)
+		trans.Listen("127.0.0.1:0")
 	}()
 
 	time.Sleep(time.Second / 10)
-	conn, err := net.Dial("tcp", "127.0.0.1:5000")
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", trans.Port()))
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}

@@ -1,11 +1,11 @@
 {
-  "name": "go-TEMPLATE",
+  "name": "go-transport",
   "version": "1.0.0",
-  "description": "TEMPLATE",
+  "description": "A JSON-over-TCP transport framework",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shadowmint/go-TEMPLATE.git"
+    "url": "git+https://github.com/shadowmint/go-transport.git"
   },
   "files": [
     "index.js",
@@ -15,9 +15,9 @@
   "author": "douglas.linder@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/shadowmint/go-TEMPLATE/issues"
+    "url": "https://github.com/shadowmint/go-transport/issues"
   },
-  "homepage": "https://github.com/shadowmint/go-TEMPLATE",
+  "homepage": "https://github.com/shadowmint/go-transport",
   "scripts": {
     "test": "go test -v ./src/ntoolkit/...",
     "postinstall": "node scripts/postinstall.js"

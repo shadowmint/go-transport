@@ -1,12 +1,12 @@
 package transport
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"ntoolkit/errors"
 	"ntoolkit/jsonbridge"
 	"ntoolkit/threadpool"
+	"sync"
 	"time"
 )
 
@@ -33,6 +33,7 @@ type Transport struct {
 	port    int
 	active  bool
 	pool    *threadpool.ThreadPool
+	lock    *sync.Mutex
 }
 
 // New creates a new transport instance with a handler.
@@ -73,6 +74,7 @@ func (transport *Transport) Listen(addr string) error {
 	transport.active = true
 	transport.pool = threadpool.New()
 	transport.pool.MaxThreads = transport.Config.MaxThreads
+	transport.lock.Lock()
 
 	// Handle requests
 	go func() {
@@ -105,7 +107,6 @@ func (transport *Transport) Listen(addr string) error {
 					for transport.active {
 						bridge.Read()
 						for bridge.Len() > 0 {
-							fmt.Printf("Got a token to handle!\n")
 							bridge.Next()
 							transport.handler(api)
 						}
@@ -121,6 +122,7 @@ func (transport *Transport) Listen(addr string) error {
 
 		// Restore state of the transport
 		transport.active = false
+		transport.lock.Unlock()
 	}()
 
 	return nil
@@ -132,14 +134,20 @@ func (transport *Transport) Port() int {
 	return transport.port
 }
 
+// Wait for the transport to finish serving requests
+func (transport *Transport) Wait() {
+	transport.lock.Lock()
+	transport.lock.Unlock()
+}
+
 // Halt stops listening on the socket and halts the worker threads
 func (transport *Transport) Halt() {
+	transport.active = false
 }
 
 // Log some error message
 func (transport *Transport) logError(message string, err error) {
 	if transport.Config.Logger != nil {
-		fmt.Printf("%v %v", message, err)
 		transport.Config.Logger.Print(err)
 		transport.Config.Logger.Print(message)
 	}
@@ -148,7 +156,6 @@ func (transport *Transport) logError(message string, err error) {
 // Log some warning message
 func (transport *Transport) logWarning(message string) {
 	if transport.Config.Logger != nil {
-		fmt.Printf("%v", message)
 		transport.Config.Logger.Print(message)
 	}
 }

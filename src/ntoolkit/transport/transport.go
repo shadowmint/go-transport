@@ -6,6 +6,7 @@ import (
 	"ntoolkit/errors"
 	"ntoolkit/jsonbridge"
 	"ntoolkit/threadpool"
+	"os"
 	"sync"
 	"time"
 )
@@ -70,6 +71,11 @@ func (transport *Transport) Listen(addr string) error {
 		return errors.Fail(ErrBind{}, err, "Unable to bind socket")
 	}
 
+	// If no logger has been assigned at this point, automatically create one
+	if transport.Config.Logger == nil {
+		transport.Config.Logger = log.New(os.Stdout, "Transport: ", log.Ldate|log.Ltime|log.Lshortfile)
+	}
+
 	// Prepare to handle requests
 	transport.port = l.Addr().(*net.TCPAddr).Port
 	transport.active = true
@@ -95,29 +101,44 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				api := &API{Connection: conn}
 				err := transport.pool.Run(func() {
 
 					// Setup
 					bridge := jsonbridge.New(conn, conn)
 					bridge.Timeout = transport.Config.ReadTimeout
-					api.bridge = bridge
-					api.active = true
+					api := &API{
+						Connection: conn,
+						Logger:     transport.Config.Logger,
+						bridge:     bridge,
+						active:     true,
+					}
 
 					// Read content on the connection until it closes and push to the handler
 					// when a completed token is ready.
 					for transport.active && api.active {
-						bridge.Read()
-						for bridge.Len() > 0 {
-							bridge.Next()
-							transport.handler(api)
+						if err := bridge.Read(); err != nil {
+							transport.logError("Connection closed", err)
+							api.active = false
+						} else {
+							for bridge.Len() > 0 {
+								bridge.Next()
+								transport.handler(api)
+							}
 						}
 					}
+
+					// If the conneciton is still active we had a high level shutdown
+					if api.active && !transport.active {
+						transport.logWarning("Connection closed by local transport close")
+						api.Close()
+					}
 				})
-				if errors.Is(err, threadpool.ErrBusy{}) {
-					transport.logWarning("Failed to handle incoming connect; no available handlers")
-				} else {
-					transport.logError("Error handling connection", err)
+				if err != nil {
+					if errors.Is(err, threadpool.ErrBusy{}) {
+						transport.logWarning("Failed to handle incoming connect; no available handlers")
+					} else {
+						transport.logError("Error handling connection", err)
+					}
 				}
 			}
 		}

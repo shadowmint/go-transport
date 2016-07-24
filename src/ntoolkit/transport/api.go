@@ -1,11 +1,15 @@
 package transport
 
-import "net"
-import "ntoolkit/jsonbridge"
+import (
+	"log"
+	"net"
+	"ntoolkit/jsonbridge"
+)
 
 // API is the api available to transport event handlers
 type API struct {
 	Connection net.Conn
+	Logger     *log.Logger
 	bridge     *jsonbridge.Bridge
 	active     bool
 }

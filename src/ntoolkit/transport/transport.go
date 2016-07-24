@@ -29,6 +29,7 @@ type Config struct {
 
 // Transport is a local raw TCP listener for JSON objects.
 type Transport struct {
+	Context interface{}
 	Config  *Config
 	handler func(*API)
 	port    int
@@ -108,7 +109,7 @@ func (transport *Transport) Listen(addr string) error {
 					bridge.Timeout = transport.Config.ReadTimeout
 					api := &API{
 						Connection: conn,
-						Transport:  transport,
+						transport:  transport,
 						Logger:     transport.Config.Logger,
 						bridge:     bridge,
 						active:     true,
@@ -118,6 +119,12 @@ func (transport *Transport) Listen(addr string) error {
 					// when a completed token is ready.
 					for transport.active && api.active {
 						if err := bridge.Read(); err != nil {
+
+							// Flush the final read into the handler
+							bridge.Next()
+							transport.handler(api)
+
+							// Close the connection
 							transport.logError("Connection closed", err)
 							api.active = false
 						} else {

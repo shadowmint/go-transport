@@ -9,8 +9,8 @@ import (
 // API is the api available to transport event handlers
 type API struct {
 	Connection net.Conn
-	Transport  *Transport
 	Logger     *log.Logger
+	transport  *Transport
 	bridge     *jsonbridge.Bridge
 	active     bool
 }
@@ -30,8 +30,20 @@ func (api *API) Write(data interface{}) error {
 	return api.bridge.Write(data)
 }
 
+// Context returns the context for this request, if any.
+// Remember connections happen in their own threads, be sure to lock
+// before modifying the context object if it is not thread safe.
+func (api *API) Context() interface{} {
+	return api.transport.Context
+}
+
 // Close the connection
 func (api *API) Close() {
 	api.active = false
 	api.Connection.Close()
+}
+
+// Shutdown the entire server
+func (api *API) Shutdown() {
+	api.transport.Halt()
 }

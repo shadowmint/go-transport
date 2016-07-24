@@ -49,7 +49,8 @@ func New(handler func(*API), config *Config) *Transport {
 	return &Transport{
 		Config:  config,
 		handler: handler,
-		active:  false}
+		active:  false,
+		lock:    &sync.Mutex{}}
 }
 
 // Listen resolves the addr string using net.ResolveTCPAddr
@@ -94,17 +95,18 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				api := &API{Connection: &conn}
+				api := &API{Connection: conn}
 				err := transport.pool.Run(func() {
 
 					// Setup
 					bridge := jsonbridge.New(conn, conn)
 					bridge.Timeout = transport.Config.ReadTimeout
 					api.bridge = bridge
+					api.active = true
 
 					// Read content on the connection until it closes and push to the handler
 					// when a completed token is ready.
-					for transport.active {
+					for transport.active && api.active {
 						bridge.Read()
 						for bridge.Len() > 0 {
 							bridge.Next()

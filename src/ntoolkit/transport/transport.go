@@ -108,6 +108,7 @@ func (transport *Transport) Listen(addr string) error {
 					bridge.Timeout = transport.Config.ReadTimeout
 					api := &API{
 						Connection: conn,
+						Transport:  transport,
 						Logger:     transport.Config.Logger,
 						bridge:     bridge,
 						active:     true,

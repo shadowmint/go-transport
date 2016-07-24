@@ -9,6 +9,7 @@ import (
 // API is the api available to transport event handlers
 type API struct {
 	Connection net.Conn
+	Transport  *Transport
 	Logger     *log.Logger
 	bridge     *jsonbridge.Bridge
 	active     bool

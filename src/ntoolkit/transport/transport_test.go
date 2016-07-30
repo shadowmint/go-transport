@@ -36,6 +36,23 @@ func TestRun(T *testing.T) {
 	})
 }
 
+func TestNetworks(T *testing.T) {
+	assert.Test(T, func(T *assert.T) {
+		trans := transport.New(func(api *transport.API) {}, nil)
+		validate := func(ips []net.IP, err error) bool {
+			if err != nil {
+				return false
+			}
+			// fmt.Printf("%v\n", ips)
+			return true
+		}
+		T.Assert(validate(trans.Networks(true, true, true)))
+		T.Assert(validate(trans.Networks(true, false, false)))
+		T.Assert(validate(trans.Networks(false, true, false)))
+		T.Assert(validate(trans.Networks(false, false, true)))
+	})
+}
+
 func TestRemoteDisconnect(T *testing.T) {
 	assert.Test(T, func(T *assert.T) {
 		resolved := 0

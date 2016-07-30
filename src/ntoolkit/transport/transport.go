@@ -165,6 +165,40 @@ func (transport *Transport) Port() int {
 	return transport.port
 }
 
+// Networks returns a list of local network interfaces that could potentially
+// have a service bound to them.
+func (transport *Transport) Networks(loopback bool, tcp4 bool, tcp6 bool) ([]net.IP, error) {
+	rtn := make([]net.IP, 0, 5)
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return rtn, errors.Fail(ErrNetworks{}, err, "Unable to get network interface list")
+	}
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err == nil {
+			for _, addr := range addrs {
+				switch v := addr.(type) {
+				case *net.IPNet:
+					if v.IP.IsLoopback() {
+						if loopback {
+							rtn = append(rtn, v.IP)
+						}
+					} else if v.IP.To4() != nil {
+						if tcp4 {
+							rtn = append(rtn, v.IP)
+						}
+					} else if v.IP.To16() != nil {
+						if tcp6 {
+							rtn = append(rtn, v.IP)
+						}
+					}
+				}
+			}
+		}
+	}
+	return rtn, nil
+}
+
 // Wait for the transport to finish serving requests
 func (transport *Transport) Wait() {
 	transport.lock.Lock()

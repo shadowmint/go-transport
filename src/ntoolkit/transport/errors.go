@@ -5,3 +5,6 @@ type ErrBind struct{}
 
 // ErrBadAddress is raised if a malformed TCP address is used.
 type ErrBadAddress struct{}
+
+// ErrNetworks is raised if an error occurred enumerating local network interfaces
+type ErrNetworks struct{}

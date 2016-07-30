@@ -7,6 +7,7 @@ TCP based data transport layer.
     package main
 
     import (
+    	"fmt"
     	"log"
     	"ntoolkit/transport"
     	"os"
@@ -28,6 +29,7 @@ TCP based data transport layer.
     		Logger:        logger,
     	}
 
+    	// Handle messages
     	trans := transport.New(func(api *transport.API) {
     		var msg message
     		if err := api.Read(&msg); err == nil {
@@ -45,8 +47,19 @@ TCP based data transport layer.
     		}
     	}, &config)
 
-    	trans.Listen("127.0.0.1:0")
-    	logger.Printf("Listening on %d...\n", trans.Port())
+    	// Find a local loopback to bind on tcp4
+    	networks, err := transport.Networks(true, true, false)
+    	if err != nil {
+    		logger.Printf("Failed to start: %v\n", err)
+    	} else if len(networks) == 0 {
+    		logger.Printf("Failed to start: No local network interfaces found.\n")
+    	}
 
+    	// Start listening
+    	host := fmt.Sprintf("%s:0", networks[0])
+    	trans.Listen(host)
+    	logger.Printf("Listening on %s:%d...\n", networks[0], trans.Port())
+
+    	// Wait for end~
     	trans.Wait()
     }

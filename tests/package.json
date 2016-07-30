@@ -1,0 +1,28 @@
+{
+  "name": "go-transport-tests",
+  "version": "1.0.0",
+  "description": "Tests of go-transport without infecting that package",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shadowmint/go-transport-tests.git"
+  },
+  "files": [
+    "index.js",
+    "scripts",
+    "src"
+  ],
+  "author": "douglas.linder@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shadowmint/go-transport-tests/issues"
+  },
+  "homepage": "https://github.com/shadowmint/go-transport-tests",
+  "dependencies": {
+    "go-assert": "github:shadowmint/go-assert",
+    "go-bolt": "github:shadowmint/go-bolt",
+    "go-transport": "github:shadowmint/go-transport",
+    "mkdirp": "^0.5.1",
+    "ncp": "^2.0.0"
+  }
+}

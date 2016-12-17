@@ -102,7 +102,7 @@ func (transport *Transport) Listen(addr string) error {
 					break
 				}
 			} else {
-				err := transport.pool.Run(func() {
+				transport.pool.Run(func() {
 
 					// Setup
 					bridge := jsonbridge.New(conn, conn)
